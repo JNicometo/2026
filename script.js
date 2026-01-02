@@ -1,5 +1,114 @@
 // Year Tracker App - Main JavaScript
 
+// ============================================
+// PASSWORD PROTECTION CONFIGURATION
+// ============================================
+// IMPORTANT: Change this password hash to secure your app
+// To generate a new hash:
+// 1. Open browser console (F12)
+// 2. Run: await hashPassword('your-password-here')
+// 3. Copy the hash and replace PASSWORD_HASH below
+
+const PASSWORD_HASH = '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'; // Default: 'password'
+
+// Password hashing function using SHA-256
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex;
+}
+
+// Authentication Manager
+class AuthManager {
+    constructor() {
+        this.isAuthenticated = false;
+        this.init();
+    }
+
+    init() {
+        // Check if already authenticated in this session
+        if (sessionStorage.getItem('authenticated') === 'true') {
+            this.showApp();
+        } else {
+            this.showLogin();
+        }
+
+        // Setup login form
+        const loginForm = document.getElementById('login-form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+        }
+
+        // Setup logout button
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => this.handleLogout());
+        }
+    }
+
+    async handleLogin(event) {
+        event.preventDefault();
+
+        const passwordInput = document.getElementById('password-input');
+        const errorElement = document.getElementById('login-error');
+        const password = passwordInput.value;
+
+        // Hash the entered password
+        const enteredHash = await hashPassword(password);
+
+        // Compare with stored hash
+        if (enteredHash === PASSWORD_HASH) {
+            // Authentication successful
+            sessionStorage.setItem('authenticated', 'true');
+            this.isAuthenticated = true;
+            errorElement.textContent = '';
+            passwordInput.value = '';
+            this.showApp();
+        } else {
+            // Authentication failed
+            errorElement.textContent = 'Incorrect password. Please try again.';
+            passwordInput.value = '';
+            passwordInput.focus();
+        }
+    }
+
+    handleLogout() {
+        if (confirm('Are you sure you want to logout?')) {
+            sessionStorage.removeItem('authenticated');
+            this.isAuthenticated = false;
+            this.showLogin();
+        }
+    }
+
+    showLogin() {
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('app-container').style.display = 'none';
+
+        // Focus on password input
+        setTimeout(() => {
+            const passwordInput = document.getElementById('password-input');
+            if (passwordInput) passwordInput.focus();
+        }, 100);
+    }
+
+    showApp() {
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app-container').style.display = 'block';
+
+        // Initialize the app if not already done
+        if (!window.app) {
+            window.app = new YearTracker();
+        }
+    }
+}
+
+// ============================================
+// MAIN APPLICATION
+// ============================================
+
 class YearTracker {
     constructor() {
         this.lifts = this.loadData('lifts') || [];
@@ -518,8 +627,10 @@ class YearTracker {
     }
 }
 
-// Initialize app when DOM is ready
-let app;
+// Initialize authentication when DOM is ready
+let authManager;
 document.addEventListener('DOMContentLoaded', () => {
-    app = new YearTracker();
+    authManager = new AuthManager();
+    // The app will be initialized by AuthManager after successful login
+    // and stored in window.app
 });

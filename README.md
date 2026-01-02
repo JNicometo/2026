@@ -34,13 +34,60 @@ A comprehensive web application to track your fitness lifts, finances, and daily
 - Import data from previous backups
 - Clear all data if needed
 
+### Password Protection
+- Secure login screen protects your data
+- SHA-256 password hashing for security
+- Session-based authentication (logout when browser closes)
+- Customizable password
+
+## Setting Up Your Password
+
+The app comes with a default password: **`password`**
+
+**IMPORTANT: Change this immediately for security!**
+
+### Steps to Change Your Password:
+
+1. Open `script.js` in a text editor
+2. Find the `PASSWORD_HASH` constant at the top of the file
+3. Open the app in your browser
+4. Open the browser console (F12 or right-click → Inspect → Console)
+5. Run this command (replace 'YourNewPassword' with your desired password):
+   ```javascript
+   await hashPassword('YourNewPassword')
+   ```
+6. Copy the hash that appears (a long string of letters and numbers)
+7. Go back to `script.js` and replace the value of `PASSWORD_HASH` with your new hash
+8. Save the file and refresh the browser
+9. Login with your new password
+
+### Example:
+
+```javascript
+// Before (default password: 'password')
+const PASSWORD_HASH = '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8';
+
+// After (your custom password)
+const PASSWORD_HASH = 'your-generated-hash-goes-here';
+```
+
+### Security Notes:
+
+- The password is hashed using SHA-256, so it's never stored in plain text
+- You'll need to re-enter your password each time you open the app in a new browser session
+- If you forget your password, you'll need to generate a new hash
+- Your data is stored locally and protected by the password
+- The logout button in the header allows you to lock the app without closing the browser
+
 ## How to Use
 
 1. Open `index.html` in your web browser
-2. Use the navigation tabs to switch between Lifts, Finances, Daily Check-ins, and Overview
-3. Click the "+ Add" buttons to log new entries
-4. Your data is automatically saved to your browser's local storage
-5. Access your tracker from anywhere once deployed to GitHub Pages
+2. Enter the password (default: `password`) to unlock the app
+3. Use the navigation tabs to switch between Lifts, Finances, Daily Check-ins, and Overview
+4. Click the "+ Add" buttons to log new entries
+5. Your data is automatically saved to your browser's local storage
+6. Click the "Logout" button in the header when you're done to lock the app
+7. Access your tracker from anywhere once deployed to GitHub Pages
 
 ## Deploying to GitHub Pages
 
@@ -71,10 +118,12 @@ If you want to deploy from a specific branch automatically, you can set up a Git
 ## Technical Details
 
 - **No dependencies**: Pure HTML, CSS, and JavaScript
+- **Password protected**: SHA-256 hashed password authentication
 - **Responsive design**: Works on desktop, tablet, and mobile devices
 - **Local storage**: All data persists in browser localStorage
 - **Privacy-focused**: No data leaves your device
 - **Offline-capable**: Works without internet connection once loaded
+- **Session-based auth**: Re-login required when browser closes for added security
 
 ## Browser Compatibility
 
