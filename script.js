@@ -4,16 +4,12 @@ const API_BASE = 'http://localhost:3000/api';
 
 class YearTracker {
     constructor() {
-        this.lifts = [];
-        this.finances = [];
         this.dailyCheckins = [];
         this.init();
     }
 
     async init() {
         this.setupTabs();
-        this.setupLifts();
-        this.setupFinances();
         this.setupDaily();
         this.setupOverview();
         this.setupDataManagement();
@@ -23,28 +19,12 @@ class YearTracker {
     // API Methods
     async loadAllData() {
         try {
-            await Promise.all([
-                this.loadLifts(),
-                this.loadFinances(),
-                this.loadDailyCheckins()
-            ]);
+            await this.loadDailyCheckins();
             this.updateOverview();
         } catch (error) {
             console.error('Error loading data:', error);
             alert('Error connecting to database. Make sure the server is running.');
         }
-    }
-
-    async loadLifts() {
-        const response = await fetch(`${API_BASE}/lifts`);
-        this.lifts = await response.json();
-        this.renderLifts();
-    }
-
-    async loadFinances() {
-        const response = await fetch(`${API_BASE}/finances`);
-        this.finances = await response.json();
-        this.renderFinances();
     }
 
     async loadDailyCheckins() {
@@ -77,244 +57,20 @@ class YearTracker {
         });
     }
 
-    // LIFTS FUNCTIONALITY
-    setupLifts() {
-        const addBtn = document.getElementById('add-lift-btn');
-        const cancelBtn = document.getElementById('cancel-lift-btn');
-        const form = document.getElementById('lift-entry-form');
-        const formContainer = document.getElementById('lift-form');
-
-        // Set default date to today
-        document.getElementById('lift-date').valueAsDate = new Date();
-
-        addBtn.addEventListener('click', () => {
-            formContainer.classList.remove('hidden');
-            addBtn.style.display = 'none';
-        });
-
-        cancelBtn.addEventListener('click', () => {
-            formContainer.classList.add('hidden');
-            addBtn.style.display = 'block';
-            form.reset();
-            document.getElementById('lift-date').valueAsDate = new Date();
-        });
-
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.addLift();
-        });
-    }
-
-    async addLift() {
-        const lift = {
-            date: document.getElementById('lift-date').value,
-            exercise: document.getElementById('lift-exercise').value,
-            weight: parseFloat(document.getElementById('lift-weight').value),
-            sets: parseInt(document.getElementById('lift-sets').value),
-            reps: parseInt(document.getElementById('lift-reps').value),
-            notes: document.getElementById('lift-notes').value
-        };
-
-        try {
-            const response = await fetch(`${API_BASE}/lifts`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(lift)
-            });
-
-            if (response.ok) {
-                await this.loadLifts();
-
-                // Reset form
-                document.getElementById('lift-entry-form').reset();
-                document.getElementById('lift-date').valueAsDate = new Date();
-                document.getElementById('lift-form').classList.add('hidden');
-                document.getElementById('add-lift-btn').style.display = 'block';
-            }
-        } catch (error) {
-            console.error('Error adding lift:', error);
-            alert('Error saving lift. Make sure the server is running.');
-        }
-    }
-
-    async deleteLift(id) {
-        if (confirm('Are you sure you want to delete this lift?')) {
-            try {
-                await fetch(`${API_BASE}/lifts/${id}`, { method: 'DELETE' });
-                await this.loadLifts();
-            } catch (error) {
-                console.error('Error deleting lift:', error);
-                alert('Error deleting lift.');
-            }
-        }
-    }
-
-    renderLifts() {
-        const container = document.getElementById('lifts-list');
-
-        if (this.lifts.length === 0) {
-            container.innerHTML = '<div class="empty-state"><p>No lifts logged yet. Start tracking your progress!</p></div>';
-            return;
-        }
-
-        container.innerHTML = this.lifts.map(lift => {
-            const volume = lift.weight * lift.sets * lift.reps;
-            return `
-                <div class="list-item">
-                    <div class="item-content">
-                        <div class="item-header">
-                            <span class="item-title">${lift.exercise}</span>
-                            <span class="item-date">${this.formatDate(lift.date)}</span>
-                        </div>
-                        <div class="item-details">
-                            ${lift.weight} lbs × ${lift.sets} sets × ${lift.reps} reps = <strong>${volume} lbs total volume</strong>
-                        </div>
-                        ${lift.notes ? `<div class="item-notes">${lift.notes}</div>` : ''}
-                    </div>
-                    <div class="item-actions">
-                        <button class="btn-delete" onclick="app.deleteLift(${lift.id})">Delete</button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    }
-
-    // FINANCES FUNCTIONALITY
-    setupFinances() {
-        const addBtn = document.getElementById('add-finance-btn');
-        const cancelBtn = document.getElementById('cancel-finance-btn');
-        const form = document.getElementById('finance-entry-form');
-        const formContainer = document.getElementById('finance-form');
-
-        // Set default date to today
-        document.getElementById('finance-date').valueAsDate = new Date();
-
-        addBtn.addEventListener('click', () => {
-            formContainer.classList.remove('hidden');
-            addBtn.style.display = 'none';
-        });
-
-        cancelBtn.addEventListener('click', () => {
-            formContainer.classList.add('hidden');
-            addBtn.style.display = 'block';
-            form.reset();
-            document.getElementById('finance-date').valueAsDate = new Date();
-        });
-
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.addFinance();
-        });
-    }
-
-    async addFinance() {
-        const finance = {
-            date: document.getElementById('finance-date').value,
-            type: document.getElementById('finance-type').value,
-            category: document.getElementById('finance-category').value,
-            amount: parseFloat(document.getElementById('finance-amount').value),
-            description: document.getElementById('finance-description').value
-        };
-
-        try {
-            const response = await fetch(`${API_BASE}/finances`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(finance)
-            });
-
-            if (response.ok) {
-                await this.loadFinances();
-
-                // Reset form
-                document.getElementById('finance-entry-form').reset();
-                document.getElementById('finance-date').valueAsDate = new Date();
-                document.getElementById('finance-form').classList.add('hidden');
-                document.getElementById('add-finance-btn').style.display = 'block';
-            }
-        } catch (error) {
-            console.error('Error adding finance:', error);
-            alert('Error saving transaction. Make sure the server is running.');
-        }
-    }
-
-    async deleteFinance(id) {
-        if (confirm('Are you sure you want to delete this transaction?')) {
-            try {
-                await fetch(`${API_BASE}/finances/${id}`, { method: 'DELETE' });
-                await this.loadFinances();
-            } catch (error) {
-                console.error('Error deleting finance:', error);
-                alert('Error deleting transaction.');
-            }
-        }
-    }
-
-    renderFinances() {
-        const container = document.getElementById('finances-list');
-
-        // Calculate totals
-        let totalIncome = 0;
-        let totalExpenses = 0;
-
-        this.finances.forEach(finance => {
-            if (finance.type === 'income') {
-                totalIncome += finance.amount;
-            } else {
-                totalExpenses += finance.amount;
-            }
-        });
-
-        const netBalance = totalIncome - totalExpenses;
-
-        // Update summary cards
-        document.getElementById('total-income').textContent = `$${totalIncome.toFixed(2)}`;
-        document.getElementById('total-expenses').textContent = `$${totalExpenses.toFixed(2)}`;
-        document.getElementById('net-balance').textContent = `$${netBalance.toFixed(2)}`;
-
-        if (this.finances.length === 0) {
-            container.innerHTML = '<div class="empty-state"><p>No transactions logged yet. Start tracking your finances!</p></div>';
-            return;
-        }
-
-        container.innerHTML = this.finances.map(finance => `
-            <div class="list-item">
-                <div class="item-content">
-                    <div class="item-header">
-                        <span class="item-title">${finance.category}</span>
-                        <span class="badge ${finance.type}">${finance.type === 'income' ? '+' : '-'}$${finance.amount.toFixed(2)}</span>
-                    </div>
-                    <div class="item-details">
-                        ${this.formatDate(finance.date)} • ${finance.type.charAt(0).toUpperCase() + finance.type.slice(1)}
-                    </div>
-                    ${finance.description ? `<div class="item-notes">${finance.description}</div>` : ''}
-                </div>
-                <div class="item-actions">
-                    <button class="btn-delete" onclick="app.deleteFinance(${finance.id})">Delete</button>
-                </div>
-            </div>
-        `).join('');
-    }
-
     // DAILY CHECK-IN FUNCTIONALITY
     setupDaily() {
         const addBtn = document.getElementById('add-daily-btn');
         const cancelBtn = document.getElementById('cancel-daily-btn');
         const form = document.getElementById('daily-entry-form');
         const formContainer = document.getElementById('daily-form');
-        const energySlider = document.getElementById('daily-energy');
-        const productivitySlider = document.getElementById('daily-productivity');
+        const moodSlider = document.getElementById('mood-rating');
 
         // Set default date to today
         document.getElementById('daily-date').valueAsDate = new Date();
 
-        // Update slider values
-        energySlider.addEventListener('input', (e) => {
-            document.getElementById('energy-value').textContent = e.target.value;
-        });
-
-        productivitySlider.addEventListener('input', (e) => {
-            document.getElementById('productivity-value').textContent = e.target.value;
+        // Update slider value
+        moodSlider.addEventListener('input', (e) => {
+            document.getElementById('mood-value').textContent = e.target.value;
         });
 
         addBtn.addEventListener('click', () => {
@@ -327,8 +83,7 @@ class YearTracker {
             addBtn.style.display = 'block';
             form.reset();
             document.getElementById('daily-date').valueAsDate = new Date();
-            document.getElementById('energy-value').textContent = '5';
-            document.getElementById('productivity-value').textContent = '5';
+            document.getElementById('mood-value').textContent = '5';
         });
 
         form.addEventListener('submit', (e) => {
@@ -340,11 +95,16 @@ class YearTracker {
     async addDailyCheckin() {
         const checkin = {
             date: document.getElementById('daily-date').value,
-            mood: document.getElementById('daily-mood').value,
-            energy: parseInt(document.getElementById('daily-energy').value),
-            productivity: parseInt(document.getElementById('daily-productivity').value),
-            notes: document.getElementById('daily-notes').value,
-            grateful: document.getElementById('daily-grateful').value
+            good_day: document.getElementById('good-day').value,
+            mood_rating: parseInt(document.getElementById('mood-rating').value),
+            amount_ran: parseFloat(document.getElementById('amount-ran').value) || null,
+            worked_out: document.getElementById('worked-out').value,
+            money_made: parseFloat(document.getElementById('money-made').value) || null,
+            money_spent: parseFloat(document.getElementById('money-spent').value) || null,
+            money_saved: parseFloat(document.getElementById('money-saved').value) || null,
+            good_thing: document.getElementById('good-thing').value,
+            bad_thing: document.getElementById('bad-thing').value,
+            notes: document.getElementById('notes').value
         };
 
         try {
@@ -360,10 +120,11 @@ class YearTracker {
                 // Reset form
                 document.getElementById('daily-entry-form').reset();
                 document.getElementById('daily-date').valueAsDate = new Date();
-                document.getElementById('energy-value').textContent = '5';
-                document.getElementById('productivity-value').textContent = '5';
+                document.getElementById('mood-value').textContent = '5';
                 document.getElementById('daily-form').classList.add('hidden');
                 document.getElementById('add-daily-btn').style.display = 'block';
+
+                this.updateOverview();
             }
         } catch (error) {
             console.error('Error adding check-in:', error);
@@ -376,23 +137,12 @@ class YearTracker {
             try {
                 await fetch(`${API_BASE}/daily-checkins/${id}`, { method: 'DELETE' });
                 await this.loadDailyCheckins();
+                this.updateOverview();
             } catch (error) {
                 console.error('Error deleting check-in:', error);
                 alert('Error deleting check-in.');
             }
         }
-    }
-
-    getMoodEmoji(mood) {
-        const moodEmojis = {
-            'amazing': '🤩',
-            'great': '😊',
-            'good': '🙂',
-            'okay': '😐',
-            'bad': '😔',
-            'terrible': '😢'
-        };
-        return moodEmojis[mood] || '🙂';
     }
 
     renderDailyCheckins() {
@@ -403,27 +153,57 @@ class YearTracker {
             return;
         }
 
-        container.innerHTML = this.dailyCheckins.map(checkin => `
-            <div class="list-item">
-                <div class="item-content">
-                    <div class="item-header">
-                        <span class="item-title">
-                            <span class="mood-indicator">${this.getMoodEmoji(checkin.mood)}</span>
-                            ${checkin.mood.charAt(0).toUpperCase() + checkin.mood.slice(1)}
-                        </span>
-                        <span class="item-date">${this.formatDate(checkin.date)}</span>
+        container.innerHTML = this.dailyCheckins.map(checkin => {
+            const moodEmoji = this.getMoodEmoji(checkin.mood_rating);
+            const goodDayText = checkin.good_day ? checkin.good_day.charAt(0).toUpperCase() + checkin.good_day.slice(1) : 'N/A';
+
+            return `
+                <div class="list-item">
+                    <div class="item-content">
+                        <div class="item-header">
+                            <span class="item-title">
+                                <span class="mood-indicator">${moodEmoji}</span>
+                                ${goodDayText} Day - Mood: ${checkin.mood_rating}/10
+                            </span>
+                            <span class="item-date">${this.formatDate(checkin.date)}</span>
+                        </div>
+
+                        ${this.renderField('🏃 Ran', checkin.amount_ran ? `${checkin.amount_ran} miles` : null)}
+                        ${this.renderField('💪 Worked out', checkin.worked_out)}
+                        ${this.renderMoneyStats(checkin)}
+                        ${checkin.good_thing ? `<div class="item-notes"><strong>✨ Good:</strong> ${checkin.good_thing}</div>` : ''}
+                        ${checkin.bad_thing ? `<div class="item-notes"><strong>⚠️ Bad:</strong> ${checkin.bad_thing}</div>` : ''}
+                        ${checkin.notes ? `<div class="item-notes"><strong>📝 Notes:</strong> ${checkin.notes}</div>` : ''}
                     </div>
-                    <div class="item-details">
-                        Energy: ${checkin.energy}/10 • Productivity: ${checkin.productivity}/10
+                    <div class="item-actions">
+                        <button class="btn-delete" onclick="app.deleteDailyCheckin(${checkin.id})">Delete</button>
                     </div>
-                    ${checkin.notes ? `<div class="item-notes"><strong>Notes:</strong> ${checkin.notes}</div>` : ''}
-                    ${checkin.grateful ? `<div class="item-notes"><strong>Grateful for:</strong> ${checkin.grateful}</div>` : ''}
                 </div>
-                <div class="item-actions">
-                    <button class="btn-delete" onclick="app.deleteDailyCheckin(${checkin.id})">Delete</button>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
+    }
+
+    renderField(label, value) {
+        if (!value) return '';
+        return `<div class="item-details">${label}: ${value}</div>`;
+    }
+
+    renderMoneyStats(checkin) {
+        const parts = [];
+        if (checkin.money_made) parts.push(`Made: $${checkin.money_made.toFixed(2)}`);
+        if (checkin.money_spent) parts.push(`Spent: $${checkin.money_spent.toFixed(2)}`);
+        if (checkin.money_saved) parts.push(`Saved: $${checkin.money_saved.toFixed(2)}`);
+
+        if (parts.length === 0) return '';
+        return `<div class="item-details">💰 ${parts.join(' • ')}</div>`;
+    }
+
+    getMoodEmoji(rating) {
+        if (rating >= 9) return '🤩';
+        if (rating >= 7) return '😊';
+        if (rating >= 5) return '🙂';
+        if (rating >= 3) return '😐';
+        return '😔';
     }
 
     // OVERVIEW FUNCTIONALITY
@@ -432,45 +212,35 @@ class YearTracker {
     }
 
     updateOverview() {
-        // Lift stats
-        const totalWorkouts = this.lifts.length;
-        const totalVolume = this.lifts.reduce((sum, lift) => {
-            return sum + (lift.weight * lift.sets * lift.reps);
-        }, 0);
-
-        document.getElementById('total-workouts').textContent = totalWorkouts;
-        document.getElementById('total-volume').textContent = totalVolume.toLocaleString();
-
-        // Finance stats
-        const totalTransactions = this.finances.length;
-        let yearIncome = 0;
-        let yearExpenses = 0;
-
-        this.finances.forEach(finance => {
-            if (finance.type === 'income') {
-                yearIncome += finance.amount;
-            } else {
-                yearExpenses += finance.amount;
-            }
-        });
-
-        const yearNet = yearIncome - yearExpenses;
-
-        document.getElementById('total-transactions').textContent = totalTransactions;
-        document.getElementById('year-net').textContent = `$${yearNet.toFixed(2)}`;
-
-        // Daily stats
         const totalCheckins = this.dailyCheckins.length;
-        const avgEnergy = totalCheckins > 0
-            ? (this.dailyCheckins.reduce((sum, c) => sum + c.energy, 0) / totalCheckins).toFixed(1)
-            : 0;
-        const avgProductivity = totalCheckins > 0
-            ? (this.dailyCheckins.reduce((sum, c) => sum + c.productivity, 0) / totalCheckins).toFixed(1)
+
+        // Mood stats
+        const avgMood = totalCheckins > 0
+            ? (this.dailyCheckins.reduce((sum, c) => sum + (c.mood_rating || 0), 0) / totalCheckins).toFixed(1)
             : 0;
 
+        const goodDays = this.dailyCheckins.filter(c => c.good_day === 'yes').length;
+
+        // Fitness stats
+        const totalRan = this.dailyCheckins.reduce((sum, c) => sum + (c.amount_ran || 0), 0);
+        const totalWorkouts = this.dailyCheckins.filter(c => c.worked_out === 'yes').length;
+
+        // Money stats
+        const totalMade = this.dailyCheckins.reduce((sum, c) => sum + (c.money_made || 0), 0);
+        const totalSpent = this.dailyCheckins.reduce((sum, c) => sum + (c.money_spent || 0), 0);
+        const totalSaved = this.dailyCheckins.reduce((sum, c) => sum + (c.money_saved || 0), 0);
+
+        // Update DOM
         document.getElementById('total-checkins').textContent = totalCheckins;
-        document.getElementById('avg-energy').textContent = avgEnergy;
-        document.getElementById('avg-productivity').textContent = avgProductivity;
+        document.getElementById('avg-mood').textContent = avgMood;
+        document.getElementById('good-days').textContent = goodDays;
+
+        document.getElementById('total-ran').textContent = totalRan.toFixed(1);
+        document.getElementById('total-workouts').textContent = totalWorkouts;
+
+        document.getElementById('total-made').textContent = `$${totalMade.toFixed(2)}`;
+        document.getElementById('total-spent').textContent = `$${totalSpent.toFixed(2)}`;
+        document.getElementById('total-saved').textContent = `$${totalSaved.toFixed(2)}`;
     }
 
     // DATA MANAGEMENT
@@ -480,12 +250,6 @@ class YearTracker {
 
         exportBtn.addEventListener('click', () => this.exportData());
         clearBtn.addEventListener('click', () => this.clearAllData());
-
-        // Remove import functionality as it's not implemented in backend
-        const importBtn = document.getElementById('import-data-btn');
-        const importInput = document.getElementById('import-file-input');
-        if (importBtn) importBtn.style.display = 'none';
-        if (importInput) importInput.style.display = 'none';
     }
 
     async exportData() {
@@ -528,7 +292,7 @@ class YearTracker {
     // UTILITY METHODS
     formatDate(dateString) {
         const date = new Date(dateString + 'T00:00:00');
-        const options = { year: 'numeric', month: 'short', day: 'numeric' };
+        const options = { year: 'numeric', month: 'short', day: 'numeric', weekday: 'short' };
         return date.toLocaleDateString('en-US', options);
     }
 }

@@ -10,125 +10,19 @@
     <div class="container">
         <header>
             <h1>🎯 2026 Year Tracker</h1>
-            <p class="subtitle">Track your lifts, finances, and daily progress</p>
+            <p class="subtitle">Track your daily progress throughout the year</p>
         </header>
 
         <nav class="tab-nav">
-            <button class="tab-btn active" data-tab="lifts">💪 Lifts</button>
-            <button class="tab-btn" data-tab="finances">💰 Finances</button>
-            <button class="tab-btn" data-tab="daily">📝 Daily Check-in</button>
+            <button class="tab-btn active" data-tab="daily">📝 Daily Check-in</button>
             <button class="tab-btn" data-tab="overview">📊 Overview</button>
         </nav>
 
-        <!-- Lifts Tab -->
-        <div class="tab-content active" id="lifts">
-            <div class="section-header">
-                <h2>Lift Tracker</h2>
-                <button class="btn-primary" id="add-lift-btn">+ Add Lift</button>
-            </div>
-
-            <div id="lift-form" class="form-container hidden">
-                <h3>Log a Lift</h3>
-                <form id="lift-entry-form">
-                    <div class="form-group">
-                        <label for="lift-date">Date</label>
-                        <input type="date" id="lift-date" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="lift-exercise">Exercise</label>
-                        <input type="text" id="lift-exercise" placeholder="e.g., Bench Press" required>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="lift-weight">Weight (lbs)</label>
-                            <input type="number" id="lift-weight" placeholder="185" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="lift-sets">Sets</label>
-                            <input type="number" id="lift-sets" placeholder="3" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="lift-reps">Reps</label>
-                            <input type="number" id="lift-reps" placeholder="8" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="lift-notes">Notes (optional)</label>
-                        <textarea id="lift-notes" placeholder="Felt strong today..." rows="2"></textarea>
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="btn-primary">Save Lift</button>
-                        <button type="button" class="btn-secondary" id="cancel-lift-btn">Cancel</button>
-                    </div>
-                </form>
-            </div>
-
-            <div id="lifts-list" class="list-container"></div>
-        </div>
-
-        <!-- Finances Tab -->
-        <div class="tab-content" id="finances">
-            <div class="section-header">
-                <h2>Finance Tracker</h2>
-                <button class="btn-primary" id="add-finance-btn">+ Add Transaction</button>
-            </div>
-
-            <div id="finance-form" class="form-container hidden">
-                <h3>Log Transaction</h3>
-                <form id="finance-entry-form">
-                    <div class="form-group">
-                        <label for="finance-date">Date</label>
-                        <input type="date" id="finance-date" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="finance-type">Type</label>
-                        <select id="finance-type" required>
-                            <option value="income">Income</option>
-                            <option value="expense">Expense</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="finance-category">Category</label>
-                        <input type="text" id="finance-category" placeholder="e.g., Groceries, Salary" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="finance-amount">Amount ($)</label>
-                        <input type="number" step="0.01" id="finance-amount" placeholder="50.00" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="finance-description">Description</label>
-                        <textarea id="finance-description" placeholder="What was this for?" rows="2"></textarea>
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="btn-primary">Save Transaction</button>
-                        <button type="button" class="btn-secondary" id="cancel-finance-btn">Cancel</button>
-                    </div>
-                </form>
-            </div>
-
-            <div class="finance-summary">
-                <div class="summary-card income">
-                    <h4>Total Income</h4>
-                    <p class="amount" id="total-income">$0.00</p>
-                </div>
-                <div class="summary-card expense">
-                    <h4>Total Expenses</h4>
-                    <p class="amount" id="total-expenses">$0.00</p>
-                </div>
-                <div class="summary-card balance">
-                    <h4>Net Balance</h4>
-                    <p class="amount" id="net-balance">$0.00</p>
-                </div>
-            </div>
-
-            <div id="finances-list" class="list-container"></div>
-        </div>
-
         <!-- Daily Check-in Tab -->
-        <div class="tab-content" id="daily">
+        <div class="tab-content active" id="daily">
             <div class="section-header">
                 <h2>Daily Check-in</h2>
-                <button class="btn-primary" id="add-daily-btn">+ Add Check-in</button>
+                <button class="btn-primary" id="add-daily-btn">+ Add Today's Check-in</button>
             </div>
 
             <div id="daily-form" class="form-container hidden">
@@ -138,36 +32,67 @@
                         <label for="daily-date">Date</label>
                         <input type="date" id="daily-date" required>
                     </div>
+
                     <div class="form-group">
-                        <label for="daily-mood">How are you feeling?</label>
-                        <select id="daily-mood" required>
-                            <option value="">Select mood...</option>
-                            <option value="amazing">🤩 Amazing</option>
-                            <option value="great">😊 Great</option>
-                            <option value="good">🙂 Good</option>
-                            <option value="okay">😐 Okay</option>
-                            <option value="bad">😔 Bad</option>
-                            <option value="terrible">😢 Terrible</option>
+                        <label for="good-day">Did you have a good day?</label>
+                        <select id="good-day" required>
+                            <option value="">Select...</option>
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                            <option value="okay">Okay</option>
                         </select>
                     </div>
+
                     <div class="form-group">
-                        <label for="daily-energy">Energy Level (1-10)</label>
-                        <input type="range" id="daily-energy" min="1" max="10" value="5" required>
-                        <span id="energy-value">5</span>
+                        <label for="mood-rating">Rate your mood (1-10)</label>
+                        <input type="range" id="mood-rating" min="1" max="10" value="5" required>
+                        <span id="mood-value">5</span>
                     </div>
+
                     <div class="form-group">
-                        <label for="daily-productivity">Productivity (1-10)</label>
-                        <input type="range" id="daily-productivity" min="1" max="10" value="5" required>
-                        <span id="productivity-value">5</span>
+                        <label for="amount-ran">Amount Ran (miles)</label>
+                        <input type="number" step="0.1" id="amount-ran" placeholder="0.0">
                     </div>
+
                     <div class="form-group">
-                        <label for="daily-notes">What happened today?</label>
-                        <textarea id="daily-notes" placeholder="Reflect on your day..." rows="4"></textarea>
+                        <label for="worked-out">Did you work out today?</label>
+                        <select id="worked-out">
+                            <option value="">Select...</option>
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
                     </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="money-made">Amount $ Made</label>
+                            <input type="number" step="0.01" id="money-made" placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label for="money-spent">Amount $ Spent</label>
+                            <input type="number" step="0.01" id="money-spent" placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label for="money-saved">Amount $ Put Away</label>
+                            <input type="number" step="0.01" id="money-saved" placeholder="0.00">
+                        </div>
+                    </div>
+
                     <div class="form-group">
-                        <label for="daily-grateful">What are you grateful for?</label>
-                        <textarea id="daily-grateful" placeholder="List 1-3 things..." rows="2"></textarea>
+                        <label for="good-thing">Good Thing Done Today</label>
+                        <textarea id="good-thing" placeholder="What positive thing did you do?" rows="2"></textarea>
                     </div>
+
+                    <div class="form-group">
+                        <label for="bad-thing">Anything Bad</label>
+                        <textarea id="bad-thing" placeholder="Anything negative that happened?" rows="2"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Notes of the Day</label>
+                        <textarea id="notes" placeholder="Reflect on your day..." rows="4"></textarea>
+                    </div>
+
                     <div class="form-actions">
                         <button type="submit" class="btn-primary">Save Check-in</button>
                         <button type="button" class="btn-secondary" id="cancel-daily-btn">Cancel</button>
@@ -184,42 +109,46 @@
 
             <div class="overview-grid">
                 <div class="overview-card">
-                    <h3>💪 Lift Stats</h3>
+                    <h3>📊 Overall Stats</h3>
                     <div class="stat-item">
-                        <span class="stat-label">Total Workouts:</span>
-                        <span class="stat-value" id="total-workouts">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Total Volume (lbs):</span>
-                        <span class="stat-value" id="total-volume">0</span>
-                    </div>
-                </div>
-
-                <div class="overview-card">
-                    <h3>💰 Finance Stats</h3>
-                    <div class="stat-item">
-                        <span class="stat-label">Total Transactions:</span>
-                        <span class="stat-value" id="total-transactions">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Net This Year:</span>
-                        <span class="stat-value" id="year-net">$0.00</span>
-                    </div>
-                </div>
-
-                <div class="overview-card">
-                    <h3>📝 Daily Stats</h3>
-                    <div class="stat-item">
-                        <span class="stat-label">Check-ins Logged:</span>
+                        <span class="stat-label">Total Check-ins:</span>
                         <span class="stat-value" id="total-checkins">0</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Avg Energy:</span>
-                        <span class="stat-value" id="avg-energy">0</span>
+                        <span class="stat-label">Average Mood:</span>
+                        <span class="stat-value" id="avg-mood">0</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Avg Productivity:</span>
-                        <span class="stat-value" id="avg-productivity">0</span>
+                        <span class="stat-label">Good Days:</span>
+                        <span class="stat-value" id="good-days">0</span>
+                    </div>
+                </div>
+
+                <div class="overview-card">
+                    <h3>🏃 Fitness Stats</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Miles Ran:</span>
+                        <span class="stat-value" id="total-ran">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Workouts Completed:</span>
+                        <span class="stat-value" id="total-workouts">0</span>
+                    </div>
+                </div>
+
+                <div class="overview-card">
+                    <h3>💰 Money Stats</h3>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Made:</span>
+                        <span class="stat-value" id="total-made">$0.00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Spent:</span>
+                        <span class="stat-value" id="total-spent">$0.00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Saved:</span>
+                        <span class="stat-value" id="total-saved">$0.00</span>
                     </div>
                 </div>
             </div>
@@ -227,8 +156,6 @@
             <div class="data-management">
                 <h3>Data Management</h3>
                 <button class="btn-secondary" id="export-data-btn">📥 Export All Data (JSON)</button>
-                <button class="btn-secondary" id="import-data-btn">📤 Import Data</button>
-                <input type="file" id="import-file-input" accept=".json" style="display: none;">
                 <button class="btn-danger" id="clear-data-btn">🗑️ Clear All Data</button>
             </div>
         </div>
