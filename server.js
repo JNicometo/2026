@@ -24,7 +24,7 @@ db.exec(`
     mood_rating INTEGER,
     productivity_rating INTEGER,
     amount_ran REAL,
-    times_lifted INTEGER,
+    lifted_weights TEXT,
     worked_out TEXT,
     money_made REAL,
     money_spent REAL,
@@ -62,7 +62,7 @@ app.post('/api/daily-checkins', (req, res) => {
       mood_rating,
       productivity_rating,
       amount_ran,
-      times_lifted,
+      lifted_weights,
       worked_out,
       money_made,
       money_spent,
@@ -75,7 +75,7 @@ app.post('/api/daily-checkins', (req, res) => {
     const stmt = db.prepare(`
       INSERT INTO daily_checkins (
         date, wake_up_time, good_day, mood_rating, productivity_rating, amount_ran,
-        times_lifted, worked_out, money_made, money_spent, money_saved, good_thing, bad_thing, notes
+        lifted_weights, worked_out, money_made, money_spent, money_saved, good_thing, bad_thing, notes
       )
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
@@ -87,7 +87,7 @@ app.post('/api/daily-checkins', (req, res) => {
       mood_rating || null,
       productivity_rating || null,
       amount_ran || null,
-      times_lifted || null,
+      lifted_weights || null,
       worked_out || null,
       money_made || null,
       money_spent || null,

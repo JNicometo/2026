@@ -106,7 +106,7 @@ class YearTracker {
             mood_rating: parseInt(document.getElementById('mood-rating').value),
             productivity_rating: parseInt(document.getElementById('productivity-rating').value),
             amount_ran: parseFloat(document.getElementById('amount-ran').value) || null,
-            times_lifted: parseInt(document.getElementById('times-lifted').value) || null,
+            lifted_weights: document.getElementById('lifted-weights').value,
             worked_out: document.getElementById('worked-out').value,
             money_made: parseFloat(document.getElementById('money-made').value) || null,
             money_spent: parseFloat(document.getElementById('money-spent').value) || null,
@@ -180,7 +180,7 @@ class YearTracker {
 
                         ${this.renderField('⏰ Woke up', checkin.wake_up_time ? this.formatTime(checkin.wake_up_time) : null)}
                         ${this.renderField('🏃 Ran', checkin.amount_ran ? `${checkin.amount_ran} miles` : null)}
-                        ${this.renderField('🏋️ Times Lifted', checkin.times_lifted)}
+                        ${this.renderField('🏋️ Lifted weights', checkin.lifted_weights)}
                         ${this.renderField('💪 Worked out', checkin.worked_out)}
                         ${this.renderMoneyStats(checkin)}
                         ${checkin.good_thing ? `<div class="item-notes"><strong>✨ Good:</strong> ${checkin.good_thing}</div>` : ''}
@@ -239,7 +239,7 @@ class YearTracker {
 
         // Fitness stats
         const totalRan = this.dailyCheckins.reduce((sum, c) => sum + (c.amount_ran || 0), 0);
-        const totalLifted = this.dailyCheckins.reduce((sum, c) => sum + (c.times_lifted || 0), 0);
+        const totalLifted = this.dailyCheckins.filter(c => c.lifted_weights === 'yes').length;
         const totalWorkouts = this.dailyCheckins.filter(c => c.worked_out === 'yes').length;
 
         // Money stats
@@ -319,7 +319,7 @@ class YearTracker {
 
     exportCSV() {
         const headers = ['date', 'wake_up_time', 'good_day', 'mood_rating', 'productivity_rating',
-                        'amount_ran', 'times_lifted', 'worked_out', 'money_made', 'money_spent',
+                        'amount_ran', 'lifted_weights', 'worked_out', 'money_made', 'money_spent',
                         'money_saved', 'good_thing', 'bad_thing', 'notes'];
 
         const csvContent = [
@@ -374,7 +374,6 @@ class YearTracker {
                     if (record.mood_rating) record.mood_rating = parseInt(record.mood_rating);
                     if (record.productivity_rating) record.productivity_rating = parseInt(record.productivity_rating);
                     if (record.amount_ran) record.amount_ran = parseFloat(record.amount_ran);
-                    if (record.times_lifted) record.times_lifted = parseInt(record.times_lifted);
                     if (record.money_made) record.money_made = parseFloat(record.money_made);
                     if (record.money_spent) record.money_spent = parseFloat(record.money_spent);
                     if (record.money_saved) record.money_saved = parseFloat(record.money_saved);
@@ -458,7 +457,7 @@ class YearTracker {
         const data = this.dailyCheckins.slice(0, 30).reverse();
         const labels = data.map(c => this.formatDate(c.date).split(',')[0]);
         const ranData = data.map(c => c.amount_ran || 0);
-        const liftedData = data.map(c => c.times_lifted || 0);
+        const liftedData = data.map(c => c.lifted_weights === 'yes' ? 1 : 0);
 
         if (this.fitnessChart) this.fitnessChart.destroy();
 
@@ -475,7 +474,7 @@ class YearTracker {
                         borderWidth: 1
                     },
                     {
-                        label: 'Times Lifted',
+                        label: 'Lifted Weights',
                         data: liftedData,
                         backgroundColor: 'rgba(59, 130, 246, 0.6)',
                         borderColor: '#3b82f6',
