@@ -25,7 +25,6 @@ db.exec(`
     productivity_rating INTEGER,
     amount_ran REAL,
     lifted_weights TEXT,
-    worked_out TEXT,
     money_made REAL,
     money_spent REAL,
     money_saved REAL,
@@ -55,6 +54,7 @@ app.get('/api/daily-checkins', (req, res) => {
 // Add a daily check-in
 app.post('/api/daily-checkins', (req, res) => {
   try {
+    console.log('POST /api/daily-checkins received:', req.body); // DEBUG
     const {
       date,
       wake_up_time,
@@ -63,7 +63,6 @@ app.post('/api/daily-checkins', (req, res) => {
       productivity_rating,
       amount_ran,
       lifted_weights,
-      worked_out,
       money_made,
       money_spent,
       money_saved,
@@ -75,9 +74,9 @@ app.post('/api/daily-checkins', (req, res) => {
     const stmt = db.prepare(`
       INSERT INTO daily_checkins (
         date, wake_up_time, good_day, mood_rating, productivity_rating, amount_ran,
-        lifted_weights, worked_out, money_made, money_spent, money_saved, good_thing, bad_thing, notes
+        lifted_weights, money_made, money_spent, money_saved, good_thing, bad_thing, notes
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = stmt.run(
@@ -88,7 +87,6 @@ app.post('/api/daily-checkins', (req, res) => {
       productivity_rating || null,
       amount_ran || null,
       lifted_weights || null,
-      worked_out || null,
       money_made || null,
       money_spent || null,
       money_saved || null,
@@ -98,8 +96,10 @@ app.post('/api/daily-checkins', (req, res) => {
     );
 
     const newCheckin = db.prepare('SELECT * FROM daily_checkins WHERE id = ?').get(result.lastInsertRowid);
+    console.log('Checkin saved successfully:', newCheckin); // DEBUG
     res.json(newCheckin);
   } catch (error) {
+    console.error('Error saving checkin:', error); // DEBUG
     res.status(500).json({ error: error.message });
   }
 });

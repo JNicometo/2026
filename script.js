@@ -99,6 +99,7 @@ class YearTracker {
     }
 
     async addDailyCheckin() {
+        console.log('addDailyCheckin called'); // DEBUG
         const checkin = {
             date: document.getElementById('daily-date').value,
             wake_up_time: document.getElementById('wake-up-time').value,
@@ -107,7 +108,6 @@ class YearTracker {
             productivity_rating: parseInt(document.getElementById('productivity-rating').value),
             amount_ran: parseFloat(document.getElementById('amount-ran').value) || null,
             lifted_weights: document.getElementById('lifted-weights').value,
-            worked_out: document.getElementById('worked-out').value,
             money_made: parseFloat(document.getElementById('money-made').value) || null,
             money_spent: parseFloat(document.getElementById('money-spent').value) || null,
             money_saved: parseFloat(document.getElementById('money-saved').value) || null,
@@ -115,6 +115,7 @@ class YearTracker {
             bad_thing: document.getElementById('bad-thing').value,
             notes: document.getElementById('notes').value
         };
+        console.log('Checkin data:', checkin); // DEBUG
 
         try {
             const response = await fetch(`${API_BASE}/daily-checkins`, {
@@ -181,7 +182,6 @@ class YearTracker {
                         ${this.renderField('⏰ Woke up', checkin.wake_up_time ? this.formatTime(checkin.wake_up_time) : null)}
                         ${this.renderField('🏃 Ran', checkin.amount_ran ? `${checkin.amount_ran} miles` : null)}
                         ${this.renderField('🏋️ Lifted weights', checkin.lifted_weights)}
-                        ${this.renderField('💪 Worked out', checkin.worked_out)}
                         ${this.renderMoneyStats(checkin)}
                         ${checkin.good_thing ? `<div class="item-notes"><strong>✨ Good:</strong> ${checkin.good_thing}</div>` : ''}
                         ${checkin.bad_thing ? `<div class="item-notes"><strong>⚠️ Bad:</strong> ${checkin.bad_thing}</div>` : ''}
@@ -240,7 +240,6 @@ class YearTracker {
         // Fitness stats
         const totalRan = this.dailyCheckins.reduce((sum, c) => sum + (c.amount_ran || 0), 0);
         const totalLifted = this.dailyCheckins.filter(c => c.lifted_weights === 'yes').length;
-        const totalWorkouts = this.dailyCheckins.filter(c => c.worked_out === 'yes').length;
 
         // Money stats
         const totalMade = this.dailyCheckins.reduce((sum, c) => sum + (c.money_made || 0), 0);
@@ -255,7 +254,6 @@ class YearTracker {
 
         document.getElementById('total-ran').textContent = totalRan.toFixed(1);
         document.getElementById('total-lifted').textContent = totalLifted;
-        document.getElementById('total-workouts').textContent = totalWorkouts;
 
         document.getElementById('total-made').textContent = `$${totalMade.toFixed(2)}`;
         document.getElementById('total-spent').textContent = `$${totalSpent.toFixed(2)}`;
@@ -319,7 +317,7 @@ class YearTracker {
 
     exportCSV() {
         const headers = ['date', 'wake_up_time', 'good_day', 'mood_rating', 'productivity_rating',
-                        'amount_ran', 'lifted_weights', 'worked_out', 'money_made', 'money_spent',
+                        'amount_ran', 'lifted_weights', 'money_made', 'money_spent',
                         'money_saved', 'good_thing', 'bad_thing', 'notes'];
 
         const csvContent = [
