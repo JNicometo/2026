@@ -1,150 +1,56 @@
-// Year Tracker App - Main JavaScript
+// Year Tracker App - Main JavaScript with SQLite Backend
 
-// ============================================
-// PASSWORD PROTECTION CONFIGURATION
-// ============================================
-// IMPORTANT: Change this password hash to secure your app
-// To generate a new hash:
-// 1. Open browser console (F12)
-// 2. Run: await hashPassword('your-password-here')
-// 3. Copy the hash and replace PASSWORD_HASH below
-
-const PASSWORD_HASH = '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8'; // Default: 'password'
-
-// Password hashing function using SHA-256
-async function hashPassword(password) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hashHex;
-}
-
-// Authentication Manager
-class AuthManager {
-    constructor() {
-        this.isAuthenticated = false;
-        this.init();
-    }
-
-    init() {
-        // Check if already authenticated in this session
-        if (sessionStorage.getItem('authenticated') === 'true') {
-            this.showApp();
-        } else {
-            this.showLogin();
-        }
-
-        // Setup login form
-        const loginForm = document.getElementById('login-form');
-        if (loginForm) {
-            loginForm.addEventListener('submit', (e) => this.handleLogin(e));
-        }
-
-        // Setup logout button
-        const logoutBtn = document.getElementById('logout-btn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => this.handleLogout());
-        }
-    }
-
-    async handleLogin(event) {
-        event.preventDefault();
-
-        const passwordInput = document.getElementById('password-input');
-        const errorElement = document.getElementById('login-error');
-        const password = passwordInput.value;
-
-        // Hash the entered password
-        const enteredHash = await hashPassword(password);
-
-        // Compare with stored hash
-        if (enteredHash === PASSWORD_HASH) {
-            // Authentication successful
-            sessionStorage.setItem('authenticated', 'true');
-            this.isAuthenticated = true;
-            errorElement.textContent = '';
-            passwordInput.value = '';
-            this.showApp();
-        } else {
-            // Authentication failed
-            errorElement.textContent = 'Incorrect password. Please try again.';
-            passwordInput.value = '';
-            passwordInput.focus();
-        }
-    }
-
-    handleLogout() {
-        if (confirm('Are you sure you want to logout?')) {
-            sessionStorage.removeItem('authenticated');
-            this.isAuthenticated = false;
-            this.showLogin();
-        }
-    }
-
-    showLogin() {
-        document.getElementById('login-screen').style.display = 'flex';
-        document.getElementById('app-container').style.display = 'none';
-
-        // Focus on password input
-        setTimeout(() => {
-            const passwordInput = document.getElementById('password-input');
-            if (passwordInput) passwordInput.focus();
-        }, 100);
-    }
-
-    showApp() {
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('app-container').style.display = 'block';
-
-        // Initialize the app if not already done
-        if (!window.app) {
-            window.app = new YearTracker();
-        }
-    }
-}
-
-// ============================================
-// MAIN APPLICATION
-// ============================================
+const API_BASE = 'http://localhost:3000/api';
 
 class YearTracker {
     constructor() {
-        this.lifts = this.loadData('lifts') || [];
-        this.finances = this.loadData('finances') || [];
-        this.dailyCheckins = this.loadData('dailyCheckins') || [];
+        this.lifts = [];
+        this.finances = [];
+        this.dailyCheckins = [];
         this.init();
     }
 
-    init() {
+    async init() {
         this.setupTabs();
         this.setupLifts();
         this.setupFinances();
         this.setupDaily();
         this.setupOverview();
         this.setupDataManagement();
-        this.updateAllViews();
+        await this.loadAllData();
     }
 
-    // Local Storage Methods
-    loadData(key) {
+    // API Methods
+    async loadAllData() {
         try {
-            const data = localStorage.getItem(key);
-            return data ? JSON.parse(data) : null;
-        } catch (e) {
-            console.error(`Error loading ${key}:`, e);
-            return null;
+            await Promise.all([
+                this.loadLifts(),
+                this.loadFinances(),
+                this.loadDailyCheckins()
+            ]);
+            this.updateOverview();
+        } catch (error) {
+            console.error('Error loading data:', error);
+            alert('Error connecting to database. Make sure the server is running.');
         }
     }
 
-    saveData(key, data) {
-        try {
-            localStorage.setItem(key, JSON.stringify(data));
-        } catch (e) {
-            console.error(`Error saving ${key}:`, e);
-            alert('Error saving data. Storage might be full.');
-        }
+    async loadLifts() {
+        const response = await fetch(`${API_BASE}/lifts`);
+        this.lifts = await response.json();
+        this.renderLifts();
+    }
+
+    async loadFinances() {
+        const response = await fetch(`${API_BASE}/finances`);
+        this.finances = await response.json();
+        this.renderFinances();
+    }
+
+    async loadDailyCheckins() {
+        const response = await fetch(`${API_BASE}/daily-checkins`);
+        this.dailyCheckins = await response.json();
+        this.renderDailyCheckins();
     }
 
     // Tab Navigation
@@ -197,13 +103,10 @@ class YearTracker {
             e.preventDefault();
             this.addLift();
         });
-
-        this.renderLifts();
     }
 
-    addLift() {
+    async addLift() {
         const lift = {
-            id: Date.now(),
             date: document.getElementById('lift-date').value,
             exercise: document.getElementById('lift-exercise').value,
             weight: parseFloat(document.getElementById('lift-weight').value),
@@ -212,22 +115,37 @@ class YearTracker {
             notes: document.getElementById('lift-notes').value
         };
 
-        this.lifts.unshift(lift);
-        this.saveData('lifts', this.lifts);
-        this.renderLifts();
+        try {
+            const response = await fetch(`${API_BASE}/lifts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(lift)
+            });
 
-        // Reset form
-        document.getElementById('lift-entry-form').reset();
-        document.getElementById('lift-date').valueAsDate = new Date();
-        document.getElementById('lift-form').classList.add('hidden');
-        document.getElementById('add-lift-btn').style.display = 'block';
+            if (response.ok) {
+                await this.loadLifts();
+
+                // Reset form
+                document.getElementById('lift-entry-form').reset();
+                document.getElementById('lift-date').valueAsDate = new Date();
+                document.getElementById('lift-form').classList.add('hidden');
+                document.getElementById('add-lift-btn').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error adding lift:', error);
+            alert('Error saving lift. Make sure the server is running.');
+        }
     }
 
-    deleteLift(id) {
+    async deleteLift(id) {
         if (confirm('Are you sure you want to delete this lift?')) {
-            this.lifts = this.lifts.filter(lift => lift.id !== id);
-            this.saveData('lifts', this.lifts);
-            this.renderLifts();
+            try {
+                await fetch(`${API_BASE}/lifts/${id}`, { method: 'DELETE' });
+                await this.loadLifts();
+            } catch (error) {
+                console.error('Error deleting lift:', error);
+                alert('Error deleting lift.');
+            }
         }
     }
 
@@ -287,13 +205,10 @@ class YearTracker {
             e.preventDefault();
             this.addFinance();
         });
-
-        this.renderFinances();
     }
 
-    addFinance() {
+    async addFinance() {
         const finance = {
-            id: Date.now(),
             date: document.getElementById('finance-date').value,
             type: document.getElementById('finance-type').value,
             category: document.getElementById('finance-category').value,
@@ -301,22 +216,37 @@ class YearTracker {
             description: document.getElementById('finance-description').value
         };
 
-        this.finances.unshift(finance);
-        this.saveData('finances', this.finances);
-        this.renderFinances();
+        try {
+            const response = await fetch(`${API_BASE}/finances`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(finance)
+            });
 
-        // Reset form
-        document.getElementById('finance-entry-form').reset();
-        document.getElementById('finance-date').valueAsDate = new Date();
-        document.getElementById('finance-form').classList.add('hidden');
-        document.getElementById('add-finance-btn').style.display = 'block';
+            if (response.ok) {
+                await this.loadFinances();
+
+                // Reset form
+                document.getElementById('finance-entry-form').reset();
+                document.getElementById('finance-date').valueAsDate = new Date();
+                document.getElementById('finance-form').classList.add('hidden');
+                document.getElementById('add-finance-btn').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error adding finance:', error);
+            alert('Error saving transaction. Make sure the server is running.');
+        }
     }
 
-    deleteFinance(id) {
+    async deleteFinance(id) {
         if (confirm('Are you sure you want to delete this transaction?')) {
-            this.finances = this.finances.filter(finance => finance.id !== id);
-            this.saveData('finances', this.finances);
-            this.renderFinances();
+            try {
+                await fetch(`${API_BASE}/finances/${id}`, { method: 'DELETE' });
+                await this.loadFinances();
+            } catch (error) {
+                console.error('Error deleting finance:', error);
+                alert('Error deleting transaction.');
+            }
         }
     }
 
@@ -405,13 +335,10 @@ class YearTracker {
             e.preventDefault();
             this.addDailyCheckin();
         });
-
-        this.renderDailyCheckins();
     }
 
-    addDailyCheckin() {
+    async addDailyCheckin() {
         const checkin = {
-            id: Date.now(),
             date: document.getElementById('daily-date').value,
             mood: document.getElementById('daily-mood').value,
             energy: parseInt(document.getElementById('daily-energy').value),
@@ -420,24 +347,39 @@ class YearTracker {
             grateful: document.getElementById('daily-grateful').value
         };
 
-        this.dailyCheckins.unshift(checkin);
-        this.saveData('dailyCheckins', this.dailyCheckins);
-        this.renderDailyCheckins();
+        try {
+            const response = await fetch(`${API_BASE}/daily-checkins`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(checkin)
+            });
 
-        // Reset form
-        document.getElementById('daily-entry-form').reset();
-        document.getElementById('daily-date').valueAsDate = new Date();
-        document.getElementById('energy-value').textContent = '5';
-        document.getElementById('productivity-value').textContent = '5';
-        document.getElementById('daily-form').classList.add('hidden');
-        document.getElementById('add-daily-btn').style.display = 'block';
+            if (response.ok) {
+                await this.loadDailyCheckins();
+
+                // Reset form
+                document.getElementById('daily-entry-form').reset();
+                document.getElementById('daily-date').valueAsDate = new Date();
+                document.getElementById('energy-value').textContent = '5';
+                document.getElementById('productivity-value').textContent = '5';
+                document.getElementById('daily-form').classList.add('hidden');
+                document.getElementById('add-daily-btn').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error adding check-in:', error);
+            alert('Error saving check-in. Make sure the server is running.');
+        }
     }
 
-    deleteDailyCheckin(id) {
+    async deleteDailyCheckin(id) {
         if (confirm('Are you sure you want to delete this check-in?')) {
-            this.dailyCheckins = this.dailyCheckins.filter(checkin => checkin.id !== id);
-            this.saveData('dailyCheckins', this.dailyCheckins);
-            this.renderDailyCheckins();
+            try {
+                await fetch(`${API_BASE}/daily-checkins/${id}`, { method: 'DELETE' });
+                await this.loadDailyCheckins();
+            } catch (error) {
+                console.error('Error deleting check-in:', error);
+                alert('Error deleting check-in.');
+            }
         }
     }
 
@@ -534,89 +476,53 @@ class YearTracker {
     // DATA MANAGEMENT
     setupDataManagement() {
         const exportBtn = document.getElementById('export-data-btn');
-        const importBtn = document.getElementById('import-data-btn');
-        const importInput = document.getElementById('import-file-input');
         const clearBtn = document.getElementById('clear-data-btn');
 
         exportBtn.addEventListener('click', () => this.exportData());
-        importBtn.addEventListener('click', () => importInput.click());
-        importInput.addEventListener('change', (e) => this.importData(e));
         clearBtn.addEventListener('click', () => this.clearAllData());
+
+        // Remove import functionality as it's not implemented in backend
+        const importBtn = document.getElementById('import-data-btn');
+        const importInput = document.getElementById('import-file-input');
+        if (importBtn) importBtn.style.display = 'none';
+        if (importInput) importInput.style.display = 'none';
     }
 
-    exportData() {
-        const data = {
-            lifts: this.lifts,
-            finances: this.finances,
-            dailyCheckins: this.dailyCheckins,
-            exportDate: new Date().toISOString()
-        };
+    async exportData() {
+        try {
+            const response = await fetch(`${API_BASE}/export`);
+            const data = await response.json();
 
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `year-tracker-backup-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `year-tracker-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
 
-        alert('Data exported successfully!');
-    }
-
-    importData(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const data = JSON.parse(e.target.result);
-
-                if (confirm('This will replace all current data. Are you sure?')) {
-                    this.lifts = data.lifts || [];
-                    this.finances = data.finances || [];
-                    this.dailyCheckins = data.dailyCheckins || [];
-
-                    this.saveData('lifts', this.lifts);
-                    this.saveData('finances', this.finances);
-                    this.saveData('dailyCheckins', this.dailyCheckins);
-
-                    this.updateAllViews();
-                    alert('Data imported successfully!');
-                }
-            } catch (error) {
-                alert('Error importing data. Please check the file format.');
-                console.error('Import error:', error);
-            }
-        };
-        reader.readAsText(file);
-        event.target.value = ''; // Reset input
-    }
-
-    clearAllData() {
-        if (confirm('Are you sure you want to clear ALL data? This cannot be undone!')) {
-            if (confirm('Really sure? This will delete everything!')) {
-                this.lifts = [];
-                this.finances = [];
-                this.dailyCheckins = [];
-
-                localStorage.removeItem('lifts');
-                localStorage.removeItem('finances');
-                localStorage.removeItem('dailyCheckins');
-
-                this.updateAllViews();
-                alert('All data cleared.');
-            }
+            alert('Data exported successfully!');
+        } catch (error) {
+            console.error('Error exporting data:', error);
+            alert('Error exporting data.');
         }
     }
 
-    updateAllViews() {
-        this.renderLifts();
-        this.renderFinances();
-        this.renderDailyCheckins();
-        this.updateOverview();
+    async clearAllData() {
+        if (confirm('Are you sure you want to clear ALL data? This cannot be undone!')) {
+            if (confirm('Really sure? This will delete everything!')) {
+                try {
+                    await fetch(`${API_BASE}/clear-all`, { method: 'DELETE' });
+                    await this.loadAllData();
+                    alert('All data cleared.');
+                } catch (error) {
+                    console.error('Error clearing data:', error);
+                    alert('Error clearing data.');
+                }
+            }
+        }
     }
 
     // UTILITY METHODS
@@ -627,10 +533,8 @@ class YearTracker {
     }
 }
 
-// Initialize authentication when DOM is ready
-let authManager;
+// Initialize app when DOM is ready
+let app;
 document.addEventListener('DOMContentLoaded', () => {
-    authManager = new AuthManager();
-    // The app will be initialized by AuthManager after successful login
-    // and stored in window.app
+    app = new YearTracker();
 });

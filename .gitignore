@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# SQLite Database
+tracker.db
+tracker.db-shm
+tracker.db-wal
+
+# Environment variables
+.env
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
