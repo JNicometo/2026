@@ -64,13 +64,18 @@ class YearTracker {
         const form = document.getElementById('daily-entry-form');
         const formContainer = document.getElementById('daily-form');
         const moodSlider = document.getElementById('mood-rating');
+        const productivitySlider = document.getElementById('productivity-rating');
 
         // Set default date to today
         document.getElementById('daily-date').valueAsDate = new Date();
 
-        // Update slider value
+        // Update slider values
         moodSlider.addEventListener('input', (e) => {
             document.getElementById('mood-value').textContent = e.target.value;
+        });
+
+        productivitySlider.addEventListener('input', (e) => {
+            document.getElementById('productivity-value').textContent = e.target.value;
         });
 
         addBtn.addEventListener('click', () => {
@@ -84,6 +89,7 @@ class YearTracker {
             form.reset();
             document.getElementById('daily-date').valueAsDate = new Date();
             document.getElementById('mood-value').textContent = '5';
+            document.getElementById('productivity-value').textContent = '5';
         });
 
         form.addEventListener('submit', (e) => {
@@ -97,6 +103,7 @@ class YearTracker {
             date: document.getElementById('daily-date').value,
             good_day: document.getElementById('good-day').value,
             mood_rating: parseInt(document.getElementById('mood-rating').value),
+            productivity_rating: parseInt(document.getElementById('productivity-rating').value),
             amount_ran: parseFloat(document.getElementById('amount-ran').value) || null,
             worked_out: document.getElementById('worked-out').value,
             money_made: parseFloat(document.getElementById('money-made').value) || null,
@@ -121,6 +128,7 @@ class YearTracker {
                 document.getElementById('daily-entry-form').reset();
                 document.getElementById('daily-date').valueAsDate = new Date();
                 document.getElementById('mood-value').textContent = '5';
+                document.getElementById('productivity-value').textContent = '5';
                 document.getElementById('daily-form').classList.add('hidden');
                 document.getElementById('add-daily-btn').style.display = 'block';
 
@@ -163,7 +171,7 @@ class YearTracker {
                         <div class="item-header">
                             <span class="item-title">
                                 <span class="mood-indicator">${moodEmoji}</span>
-                                ${goodDayText} Day - Mood: ${checkin.mood_rating}/10
+                                ${goodDayText} Day - Mood: ${checkin.mood_rating}/10 • Productivity: ${checkin.productivity_rating}/10
                             </span>
                             <span class="item-date">${this.formatDate(checkin.date)}</span>
                         </div>
@@ -214,9 +222,13 @@ class YearTracker {
     updateOverview() {
         const totalCheckins = this.dailyCheckins.length;
 
-        // Mood stats
+        // Mood and productivity stats
         const avgMood = totalCheckins > 0
             ? (this.dailyCheckins.reduce((sum, c) => sum + (c.mood_rating || 0), 0) / totalCheckins).toFixed(1)
+            : 0;
+
+        const avgProductivity = totalCheckins > 0
+            ? (this.dailyCheckins.reduce((sum, c) => sum + (c.productivity_rating || 0), 0) / totalCheckins).toFixed(1)
             : 0;
 
         const goodDays = this.dailyCheckins.filter(c => c.good_day === 'yes').length;
@@ -233,6 +245,7 @@ class YearTracker {
         // Update DOM
         document.getElementById('total-checkins').textContent = totalCheckins;
         document.getElementById('avg-mood').textContent = avgMood;
+        document.getElementById('avg-productivity').textContent = avgProductivity;
         document.getElementById('good-days').textContent = goodDays;
 
         document.getElementById('total-ran').textContent = totalRan.toFixed(1);

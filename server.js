@@ -21,6 +21,7 @@ db.exec(`
     date TEXT NOT NULL,
     good_day TEXT,
     mood_rating INTEGER,
+    productivity_rating INTEGER,
     amount_ran REAL,
     worked_out TEXT,
     money_made REAL,
@@ -56,6 +57,7 @@ app.post('/api/daily-checkins', (req, res) => {
       date,
       good_day,
       mood_rating,
+      productivity_rating,
       amount_ran,
       worked_out,
       money_made,
@@ -68,16 +70,17 @@ app.post('/api/daily-checkins', (req, res) => {
 
     const stmt = db.prepare(`
       INSERT INTO daily_checkins (
-        date, good_day, mood_rating, amount_ran, worked_out,
+        date, good_day, mood_rating, productivity_rating, amount_ran, worked_out,
         money_made, money_spent, money_saved, good_thing, bad_thing, notes
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = stmt.run(
       date,
       good_day || null,
       mood_rating || null,
+      productivity_rating || null,
       amount_ran || null,
       worked_out || null,
       money_made || null,

@@ -50,6 +50,12 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="productivity-rating">How productive was your day? (1-10)</label>
+                        <input type="range" id="productivity-rating" min="1" max="10" value="5" required>
+                        <span id="productivity-value">5</span>
+                    </div>
+
+                    <div class="form-group">
                         <label for="amount-ran">Amount Ran (miles)</label>
                         <input type="number" step="0.1" id="amount-ran" placeholder="0.0">
                     </div>
@@ -117,6 +123,10 @@
                     <div class="stat-item">
                         <span class="stat-label">Average Mood:</span>
                         <span class="stat-value" id="avg-mood">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Average Productivity:</span>
+                        <span class="stat-value" id="avg-productivity">0</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Good Days:</span>
