@@ -19,10 +19,12 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS daily_checkins (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     date TEXT NOT NULL,
+    wake_up_time TEXT,
     good_day TEXT,
     mood_rating INTEGER,
     productivity_rating INTEGER,
     amount_ran REAL,
+    times_lifted INTEGER,
     worked_out TEXT,
     money_made REAL,
     money_spent REAL,
@@ -55,10 +57,12 @@ app.post('/api/daily-checkins', (req, res) => {
   try {
     const {
       date,
+      wake_up_time,
       good_day,
       mood_rating,
       productivity_rating,
       amount_ran,
+      times_lifted,
       worked_out,
       money_made,
       money_spent,
@@ -70,18 +74,20 @@ app.post('/api/daily-checkins', (req, res) => {
 
     const stmt = db.prepare(`
       INSERT INTO daily_checkins (
-        date, good_day, mood_rating, productivity_rating, amount_ran, worked_out,
-        money_made, money_spent, money_saved, good_thing, bad_thing, notes
+        date, wake_up_time, good_day, mood_rating, productivity_rating, amount_ran,
+        times_lifted, worked_out, money_made, money_spent, money_saved, good_thing, bad_thing, notes
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const result = stmt.run(
       date,
+      wake_up_time || null,
       good_day || null,
       mood_rating || null,
       productivity_rating || null,
       amount_ran || null,
+      times_lifted || null,
       worked_out || null,
       money_made || null,
       money_spent || null,

@@ -101,10 +101,12 @@ class YearTracker {
     async addDailyCheckin() {
         const checkin = {
             date: document.getElementById('daily-date').value,
+            wake_up_time: document.getElementById('wake-up-time').value,
             good_day: document.getElementById('good-day').value,
             mood_rating: parseInt(document.getElementById('mood-rating').value),
             productivity_rating: parseInt(document.getElementById('productivity-rating').value),
             amount_ran: parseFloat(document.getElementById('amount-ran').value) || null,
+            times_lifted: parseInt(document.getElementById('times-lifted').value) || null,
             worked_out: document.getElementById('worked-out').value,
             money_made: parseFloat(document.getElementById('money-made').value) || null,
             money_spent: parseFloat(document.getElementById('money-spent').value) || null,
@@ -176,7 +178,9 @@ class YearTracker {
                             <span class="item-date">${this.formatDate(checkin.date)}</span>
                         </div>
 
+                        ${this.renderField('⏰ Woke up', checkin.wake_up_time ? this.formatTime(checkin.wake_up_time) : null)}
                         ${this.renderField('🏃 Ran', checkin.amount_ran ? `${checkin.amount_ran} miles` : null)}
+                        ${this.renderField('🏋️ Times Lifted', checkin.times_lifted)}
                         ${this.renderField('💪 Worked out', checkin.worked_out)}
                         ${this.renderMoneyStats(checkin)}
                         ${checkin.good_thing ? `<div class="item-notes"><strong>✨ Good:</strong> ${checkin.good_thing}</div>` : ''}
@@ -235,6 +239,7 @@ class YearTracker {
 
         // Fitness stats
         const totalRan = this.dailyCheckins.reduce((sum, c) => sum + (c.amount_ran || 0), 0);
+        const totalLifted = this.dailyCheckins.reduce((sum, c) => sum + (c.times_lifted || 0), 0);
         const totalWorkouts = this.dailyCheckins.filter(c => c.worked_out === 'yes').length;
 
         // Money stats
@@ -249,19 +254,29 @@ class YearTracker {
         document.getElementById('good-days').textContent = goodDays;
 
         document.getElementById('total-ran').textContent = totalRan.toFixed(1);
+        document.getElementById('total-lifted').textContent = totalLifted;
         document.getElementById('total-workouts').textContent = totalWorkouts;
 
         document.getElementById('total-made').textContent = `$${totalMade.toFixed(2)}`;
         document.getElementById('total-spent').textContent = `$${totalSpent.toFixed(2)}`;
         document.getElementById('total-saved').textContent = `$${totalSaved.toFixed(2)}`;
+
+        // Update charts
+        this.updateCharts();
     }
 
     // DATA MANAGEMENT
     setupDataManagement() {
         const exportBtn = document.getElementById('export-data-btn');
+        const exportCsvBtn = document.getElementById('export-csv-btn');
+        const importCsvBtn = document.getElementById('import-csv-btn');
+        const importCsvInput = document.getElementById('import-csv-input');
         const clearBtn = document.getElementById('clear-data-btn');
 
         exportBtn.addEventListener('click', () => this.exportData());
+        exportCsvBtn.addEventListener('click', () => this.exportCSV());
+        importCsvBtn.addEventListener('click', () => importCsvInput.click());
+        importCsvInput.addEventListener('change', (e) => this.importCSV(e));
         clearBtn.addEventListener('click', () => this.clearAllData());
     }
 
@@ -302,11 +317,250 @@ class YearTracker {
         }
     }
 
+    exportCSV() {
+        const headers = ['date', 'wake_up_time', 'good_day', 'mood_rating', 'productivity_rating',
+                        'amount_ran', 'times_lifted', 'worked_out', 'money_made', 'money_spent',
+                        'money_saved', 'good_thing', 'bad_thing', 'notes'];
+
+        const csvContent = [
+            headers.join(','),
+            ...this.dailyCheckins.map(c => headers.map(h => {
+                const value = c[h] || '';
+                // Escape commas and quotes in values
+                return typeof value === 'string' && (value.includes(',') || value.includes('"'))
+                    ? `"${value.replace(/"/g, '""')}"`
+                    : value;
+            }).join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `year-tracker-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        alert('CSV exported successfully!');
+    }
+
+    async importCSV(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const text = e.target.result;
+                const lines = text.split('\n');
+                const headers = lines[0].split(',');
+
+                if (!confirm(`Import ${lines.length - 1} records? This will add to existing data.`)) {
+                    return;
+                }
+
+                for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i].trim()) continue;
+
+                    const values = lines[i].split(',');
+                    const record = {};
+                    headers.forEach((header, index) => {
+                        const value = values[index]?.trim();
+                        record[header.trim()] = value === '' ? null : value;
+                    });
+
+                    // Convert numeric fields
+                    if (record.mood_rating) record.mood_rating = parseInt(record.mood_rating);
+                    if (record.productivity_rating) record.productivity_rating = parseInt(record.productivity_rating);
+                    if (record.amount_ran) record.amount_ran = parseFloat(record.amount_ran);
+                    if (record.times_lifted) record.times_lifted = parseInt(record.times_lifted);
+                    if (record.money_made) record.money_made = parseFloat(record.money_made);
+                    if (record.money_spent) record.money_spent = parseFloat(record.money_spent);
+                    if (record.money_saved) record.money_saved = parseFloat(record.money_saved);
+
+                    // Post to API
+                    await fetch(`${API_BASE}/daily-checkins`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(record)
+                    });
+                }
+
+                await this.loadAllData();
+                alert('CSV imported successfully!');
+            } catch (error) {
+                console.error('Error importing CSV:', error);
+                alert('Error importing CSV file.');
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
+    // CHARTS
+    updateCharts() {
+        this.createMoodChart();
+        this.createFitnessChart();
+        this.createMoneyChart();
+    }
+
+    createMoodChart() {
+        const ctx = document.getElementById('moodChart');
+        if (!ctx) return;
+
+        // Get last 30 days of data
+        const data = this.dailyCheckins.slice(0, 30).reverse();
+        const labels = data.map(c => this.formatDate(c.date).split(',')[0]);
+        const moodData = data.map(c => c.mood_rating || 0);
+        const productivityData = data.map(c => c.productivity_rating || 0);
+
+        if (this.moodChart) this.moodChart.destroy();
+
+        this.moodChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Mood',
+                        data: moodData,
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Productivity',
+                        data: productivityData,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 10
+                    }
+                }
+            }
+        });
+    }
+
+    createFitnessChart() {
+        const ctx = document.getElementById('fitnessChart');
+        if (!ctx) return;
+
+        const data = this.dailyCheckins.slice(0, 30).reverse();
+        const labels = data.map(c => this.formatDate(c.date).split(',')[0]);
+        const ranData = data.map(c => c.amount_ran || 0);
+        const liftedData = data.map(c => c.times_lifted || 0);
+
+        if (this.fitnessChart) this.fitnessChart.destroy();
+
+        this.fitnessChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Miles Ran',
+                        data: ranData,
+                        backgroundColor: 'rgba(239, 68, 68, 0.6)',
+                        borderColor: '#ef4444',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Times Lifted',
+                        data: liftedData,
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                        borderColor: '#3b82f6',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    createMoneyChart() {
+        const ctx = document.getElementById('moneyChart');
+        if (!ctx) return;
+
+        const data = this.dailyCheckins.slice(0, 30).reverse();
+        const labels = data.map(c => this.formatDate(c.date).split(',')[0]);
+        const madeData = data.map(c => c.money_made || 0);
+        const spentData = data.map(c => (c.money_spent || 0) * -1); // Negative for spending
+        const savedData = data.map(c => c.money_saved || 0);
+
+        if (this.moneyChart) this.moneyChart.destroy();
+
+        this.moneyChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Made',
+                        data: madeData,
+                        backgroundColor: 'rgba(16, 185, 129, 0.6)',
+                        borderColor: '#10b981',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Spent',
+                        data: spentData,
+                        backgroundColor: 'rgba(239, 68, 68, 0.6)',
+                        borderColor: '#ef4444',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Saved',
+                        data: savedData,
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                        borderColor: '#3b82f6',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
     // UTILITY METHODS
     formatDate(dateString) {
         const date = new Date(dateString + 'T00:00:00');
         const options = { year: 'numeric', month: 'short', day: 'numeric', weekday: 'short' };
         return date.toLocaleDateString('en-US', options);
+    }
+
+    formatTime(timeString) {
+        if (!timeString) return '';
+        const [hours, minutes] = timeString.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const hour12 = hour % 12 || 12;
+        return `${hour12}:${minutes} ${ampm}`;
     }
 }
 

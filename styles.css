@@ -475,6 +475,41 @@ header h1 {
     margin-right: 10px;
 }
 
+/* Charts Section */
+.charts-section {
+    margin-top: 40px;
+    margin-bottom: 30px;
+}
+
+.charts-section h2 {
+    margin-bottom: 25px;
+    color: var(--text-primary);
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.chart-container {
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+}
+
+.chart-container h3 {
+    margin-bottom: 20px;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+}
+
+.chart-container canvas {
+    max-height: 300px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     header h1 {
@@ -524,6 +559,10 @@ header h1 {
     }
 
     .overview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .charts-grid {
         grid-template-columns: 1fr;
     }
 }

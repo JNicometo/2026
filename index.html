@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2026 Year Tracker</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -34,6 +35,11 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="wake-up-time">Wake Up Time</label>
+                        <input type="time" id="wake-up-time" placeholder="e.g., 07:00">
+                    </div>
+
+                    <div class="form-group">
                         <label for="good-day">Did you have a good day?</label>
                         <select id="good-day" required>
                             <option value="">Select...</option>
@@ -58,6 +64,11 @@
                     <div class="form-group">
                         <label for="amount-ran">Amount Ran (miles)</label>
                         <input type="number" step="0.1" id="amount-ran" placeholder="0.0">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="times-lifted">Times Lifted (sets/exercises)</label>
+                        <input type="number" id="times-lifted" placeholder="0">
                     </div>
 
                     <div class="form-group">
@@ -141,6 +152,10 @@
                         <span class="stat-value" id="total-ran">0</span>
                     </div>
                     <div class="stat-item">
+                        <span class="stat-label">Total Times Lifted:</span>
+                        <span class="stat-value" id="total-lifted">0</span>
+                    </div>
+                    <div class="stat-item">
                         <span class="stat-label">Workouts Completed:</span>
                         <span class="stat-value" id="total-workouts">0</span>
                     </div>
@@ -163,9 +178,30 @@
                 </div>
             </div>
 
+            <div class="charts-section">
+                <h2>📈 Trends</h2>
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>Mood & Productivity Over Time</h3>
+                        <canvas id="moodChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Fitness Activity</h3>
+                        <canvas id="fitnessChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Money Flow</h3>
+                        <canvas id="moneyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
             <div class="data-management">
                 <h3>Data Management</h3>
                 <button class="btn-secondary" id="export-data-btn">📥 Export All Data (JSON)</button>
+                <button class="btn-secondary" id="export-csv-btn">📊 Export as CSV</button>
+                <button class="btn-secondary" id="import-csv-btn">📁 Import CSV</button>
+                <input type="file" id="import-csv-input" accept=".csv" style="display: none;">
                 <button class="btn-danger" id="clear-data-btn">🗑️ Clear All Data</button>
             </div>
         </div>
